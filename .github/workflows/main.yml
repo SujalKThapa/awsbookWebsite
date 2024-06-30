@@ -3,13 +3,12 @@ name: Upload to S3
 on:
   push:
     branches:
-      - main  # or the branch you want to trigger this workflow
+      - main
 
-      
 permissions:
   id-token: write
   contents: read
-  
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,16 +17,21 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Print environment variables
-      run: print(${{ secrets.AWS_ACCESS_KEY_ID }})
-      
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Configure AWS credentials using OIDC
+      uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::339712817572:role/githubActionsRole
         aws-region: us-east-1  # replace with your desired region
+
+    - name: Install AWS CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install awscli
+
+    - name: Verify AWS CLI configuration
+      run: |
+        aws s3 ls
 
     - name: Sync files to S3
       run: |
-        aws s3 sync . s3://articuano2005-awsnotes-bucketman987 --exclude ".git/*" --delete
+        aws s3 sync . s3://your-s3-bucket-name --exclude ".git/*" --delete
